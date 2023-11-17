@@ -1,5 +1,4 @@
 from gensim.models import Word2Vec
-from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Função para carregar o conteúdo do arquivo
@@ -18,36 +17,41 @@ frases = [
     "A palavra insignificante não deveria ser usada.",
     "Você é um amor",
     "A palavra sofrido não deveria ser usada.",
+    "A palavra sofrimento não deveria ser usada.",
+    "A palavra castigo não deveria ser usada.",
 ]
 
 # Treinar o modelo Word2Vec
-model = Word2Vec([palavras_toxicas], min_count=1, vector_size=10)
+model = Word2Vec([frase.split() for frase in frases], min_count=1, vector_size=10)
 
-# Vetorizar as palavras tóxicas
-vectorizer = CountVectorizer().fit(palavras_toxicas)
-toxic_vectors = vectorizer.transform(palavras_toxicas).toarray()
+# Função para calcular o vetor médio de uma frase
+def calcular_vetor_medio(frase, model):
+    palavras = frase.split()
+    vetor_palavras = [model.wv.get_vector(palavra) for palavra in palavras if palavra in model.wv]
+    if vetor_palavras:
+        return sum(vetor_palavras) / len(vetor_palavras)
+    else:
+        return None
 
-# Função para marcar as frases como tóxicas
-def marcar_frases_toxicas(frases, model, vectorizer, toxic_vectors, threshold=0.8):
-    frases_toxicas = []
+# Calcular vetores médios das palavras tóxicas
+vetores_toxicos = [calcular_vetor_medio(palavra, model) for palavra in palavras_toxicas]
 
-    for frase in frases:
-        # Vetorizar a frase
-        frase_vector = vectorizer.transform([frase]).toarray()
+# Vetorizar as frases
+vetores_frases = [calcular_vetor_medio(frase, model) for frase in frases]
 
-        # Calcular similaridade de cosseno entre a frase e palavras tóxicas
-        similarity = cosine_similarity(frase_vector, toxic_vectors).max()
+# Função para calcular a similaridade de cosseno entre dois vetores
+def calcular_similaridade(vetor1, vetor2):
+    if vetor1 is not None and vetor2 is not None:
+        return cosine_similarity([vetor1], [vetor2])[0][0]
+    else:
+        return 0.0
 
-        # Marcar a frase como tóxica se a similaridade for maior que o limite
-        if similarity > threshold:
-            frases_toxicas.append((frase, similarity))
-
-    return frases_toxicas
+# Exibir cabeçalho
+print("Frase Original | Frase Tóxica | Similaridade")
 
 # Marcar as frases como tóxicas
-frases_toxicas = marcar_frases_toxicas(frases, model, vectorizer, toxic_vectors, threshold=0.5)
-
-# Exibir frases tóxicas
-print("Frases tóxicas:")
-for frase, similarity in frases_toxicas:
-    print(f"- '{frase}' (Similaridade: {similarity:.2f})")
+for i, vetor_frase in enumerate(vetores_frases):
+    for j, vetor_toxico in enumerate(vetores_toxicos):
+        similaridade = calcular_similaridade(vetor_frase, vetor_toxico)
+        if similaridade > 0.4:  # Ajuste o limite conforme necessário
+            print(f"{frases[i]} | {palavras_toxicas[j]} | {similaridade:.2f}")
