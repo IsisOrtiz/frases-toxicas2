@@ -11,6 +11,7 @@ palavras_toxicas = carregar_arquivo('arquivo.txt')
 
 # Carregar frases que você quer verificar
 frases = [
+    "Seu animal",
     "Esta é uma frase de exemplo contendo a palavra anão.",
     "A palavra arrombado não deveria ser usada.",
     "Esta frase não contém palavras tóxicas.",
@@ -19,7 +20,8 @@ frases = [
     "A palavra sofrido não deveria ser usada.",
     "A palavra sofrimento não deveria ser usada.",
     "A palavra castigo não deveria ser usada.",
-]
+    "Sua mãe é uma vaca",
+    ]
 
 # Treinar o modelo Word2Vec
 model = Word2Vec([frase.split() for frase in frases], min_count=1, vector_size=10)
@@ -49,9 +51,11 @@ def calcular_similaridade(vetor1, vetor2):
 # Exibir cabeçalho
 print("Frase Original | Frase Tóxica | Similaridade")
 
+# Taxa de similaridade
+taxa_similaridade = 0.1
 # Marcar as frases como tóxicas
 for i, vetor_frase in enumerate(vetores_frases):
     for j, vetor_toxico in enumerate(vetores_toxicos):
         similaridade = calcular_similaridade(vetor_frase, vetor_toxico)
-        if similaridade > 0.4:  # Ajuste o limite conforme necessário
+        if similaridade > taxa_similaridade:  # Ajuste o limite conforme necessário
             print(f"{frases[i]} | {palavras_toxicas[j]} | {similaridade:.2f}")
